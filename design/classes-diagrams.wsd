@@ -1,4 +1,4 @@
-@startuml
+@startuml server-class-diagram.png
 
 'Server:
 
@@ -210,7 +210,7 @@ class RecordFloatingPoint {
 
 @enduml
 
-@startuml
+@startuml client-class-diagram.png
 
 'Client:
 
@@ -250,5 +250,121 @@ class Network {
 }
 
 DBContext "1" -- "1" Network
+
+@enduml
+
+@startuml consolidated-class-diagram.png
+
+skinparam backgroundColor transparent
+
+hide empty methods
+hide empty fields
+
+namespace Server <<Rect>> {
+	class Database
+	class Network
+
+	class ClientConnection
+	class DataController
+	class Journal
+	
+	Database "1" -- "*" ClientConnection : clients
+	Database "1" -- "1" DataController : contains
+	Database "1" -- "1" Network : interacts with
+	Database "1" -- "*" Shared.Transaction : pending transactions
+	DataController "1" -- "1..2" Datastore : contains primary/transitory
+	DataController "1" -- "1..2" Journal : contains primary/transitory
+
+	class Datastore {
+		- File source
+		+ void initialize(file source, boolean shouldCache = true)
+		- Index createIndex()
+		+ Record[] getRecord(char[] key)
+		- Record[] readRecordFromSource(char[] key)
+		+ DRMEStatus modifyRecord(DRME event)
+		+ boolean verify()
+		- Datastore mergeWith(Datastore other, char[] outputFile)
+		- void deleteDatastore(Datastore datastore)
+	}
+	class Network {
+		- integer port
+		+ void initialize(integer port)
+		+ ClientConnection listen()
+		+ void close()
+	}
+
+	class ClientConnection {
+		- void threadEntry()
+		- Transaction getTransaction()
+	}
+
+	class DataController {
+		+ void open(char[] filename)
+		+ void close()
+		+ char[] processStatement(char[] statement)
+		+ boolean verify()
+		- void rotate()
+		- void rotateDatastores()
+		- void rotateJournal()
+	}
+
+	class Journal {
+		- File source
+		+ void initialize(file source, integer version)
+		+ void applyToDatastore(Datastore datastore)
+		+ void writeEvent(DRME event)
+		- void preprocess()
+	}
+
+	class Database {
+		+ void initialize(integer externalPort, char[] filename)
+		+ void listen()
+		- void handleClient()
+		+ char[][] processTransaction(Transaction transaction)
+		+ void stop()
+		+ void suspendTransactions()
+		+ void resumeTransactions()
+		+ boolean verify()
+	}
+}
+
+Server.Network -- Client.Network : communicates with
+
+namespace Shared <<Rect>> {
+	class Transaction {
+		+ boolean readonly
+		+ char[][] statements
+	}
+}
+
+namespace Client <<Rect>> {
+	Shared.Transaction <|-- ClientTransaction
+	Shared.Transaction "*" -- "1" DBContext
+	DBContext "1" -- "1" Network
+
+	class DBContext {
+		- Address server
+		- boolean connected
+		- boolean error
+		+ DBContext(Address server)
+	}
+
+	class ClientTransaction {
+		+ ClientTransaction(DBContext context)
+		+ Result commit()
+		+ void abort()
+		+ void add(char[][] statements)
+	}
+
+	class Result {
+		+ Variant[] responses
+	}
+
+	class Network {
+		+ Address address
+		+ void send()
+	}
+
+}
 
 @enduml
