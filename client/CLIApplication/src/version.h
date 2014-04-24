@@ -1,1 +1,0 @@
-#define ACIDDB_CL_VERSION "0.0.1"
