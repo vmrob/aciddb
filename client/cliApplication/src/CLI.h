@@ -24,7 +24,6 @@ public:
 	void processInput();
 
 	void header();
-
 private:
 	std::vector<std::shared_ptr<Observer>> _observers;
 };
