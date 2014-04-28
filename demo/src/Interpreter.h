@@ -1,4 +1,5 @@
 #pragma once
+
 #include "CLI.h"
 
 class Interpreter : public CLI::Observer {

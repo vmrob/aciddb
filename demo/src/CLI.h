@@ -1,4 +1,5 @@
 #pragma once
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -13,17 +14,16 @@ public:
 		virtual void newInput(std::string line) = 0;
 	};
 
-	void writeLine(std::string data);
-
-	void subscribe(std::shared_ptr<Observer> obs);
-
-	bool hasInput();
-
+	inline void writeLine(std::string data) const {	std::cout << data << std::endl; }
+	inline void subscribe(std::shared_ptr<Observer> obs) { _observers.push_back(obs); }
+	inline bool hasInput() const { return _InputAvailable(); }
+	
 	void awaitInput();
-
 	void processInput();
-
 	void header();
+
 private:
 	std::vector<std::shared_ptr<Observer>> _observers;
+
+	static bool _InputAvailable();
 };
